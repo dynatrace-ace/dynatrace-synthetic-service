@@ -1,0 +1,11 @@
+# local files
+_*
+
+# GoLand IDE
+.idea/*
+
+# VS Code
+.vscode/*
+
+# Release Artifacts
+RELEASE-BODY.md
