@@ -1,6 +1,3 @@
----
-fullnameOverride: "dynatrace-synthetic-service"
-
 dynatraceService:
   image:
     repository: dynatraceace/keptn-dt-synthetic-service # Container Image Name

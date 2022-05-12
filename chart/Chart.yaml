@@ -1,6 +1,6 @@
 apiVersion: v2
-name: dynatrace-service
-description: Helm Chart for the keptn-contrib dynatrace-service
+name: dynatrace-synthetic-service
+description: Helm Chart for the dynatrace-synthetic-service
 
 # A chart can be either an 'application' or a 'library' chart.
 #
