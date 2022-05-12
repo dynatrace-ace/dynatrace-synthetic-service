@@ -1,8 +1,11 @@
+---
+fullnameOverride: "dynatrace-synthetic-service"
+
 dynatraceService:
   image:
-    repository: docker.io/keptncontrib/dynatrace-service # Container Image Name
-    pullPolicy: IfNotPresent                 # Kubernetes Image Pull Policy
-    tag: ""                                  # Container Tag
+    repository: dynatraceace/keptn-dt-synthetic-service # Container Image Name
+    pullPolicy: Always                 # Kubernetes Image Pull Policy
+    tag: "0.1.0-dev"                                  # Container Tag
   service:
     enabled: true                            # Creates a Kubernetes Service for the dynatrace-service
   config:
