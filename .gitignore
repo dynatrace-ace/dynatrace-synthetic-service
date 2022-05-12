@@ -1,5 +1,6 @@
 # local files
 _*
+!_helpers.tpl
 
 # GoLand IDE
 .idea/*
