@@ -17,7 +17,7 @@ dynatraceService:
     httpProxy: ""                            # Proxy for HTTP requests
     httpsProxy: ""                           # Proxy for HTTPS requests
     noProxy: ""                              # Proxy exceptions for HTTP and HTTPS requests
-    logLevel: "info"                         # Minimum log level to log
+    logLevel: "debug"                         # Minimum log level to log
     keptnApiUrl: ""                          # URL of keptn API
     keptnBridgeUrl: ""                       # URL of keptn bridge
 
