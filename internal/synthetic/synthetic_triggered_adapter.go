@@ -6,89 +6,95 @@ import (
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 )
 
-type SyntheticTriggeredAdapterInterface interface {
+type SyntheticTriggerAdapterInterface interface {
 	adapter.EventContentAdapter
-	GetSyntheticMonitorId() string
+	adapter.TriggeredCloudEventContentAdapter
+
+	GetSyntheticMonitorTag() string
 }
 
-type SyntheticTriggeredEventData struct {
+type SyntheticTriggerEventData struct {
 	keptnv2.EventData
-	MonitorId string `json:"monitorId"`
+	MonitorTag string `json:"monitorTag"`
 }
 
-// SyntheticTriggeredAdapter is a content adaptor for events of type sh.keptn.event.test.triggered
-type SyntheticTriggeredAdapter struct {
-	event      SyntheticTriggeredEventData
+// SyntheticTriggerAdapter is a content adaptor for events of type sh.keptn.event.test.triggered
+type SyntheticTriggerAdapter struct {
+	event      SyntheticTriggerEventData
 	cloudEvent adapter.CloudEventAdapter
 }
 
-// NewSyntheticTriggeredAdapterFromEvent creates a new SyntheticTriggeredAdapter from a cloudevents Event
-func NewSyntheticTriggeredAdapterFromEvent(e cloudevents.Event) (*SyntheticTriggeredAdapter, error) {
+// NewSyntheticTriggerAdapterFromEvent creates a new SyntheticTriggerAdapter from a cloudevents Event
+func NewSyntheticTriggerAdapterFromEvent(e cloudevents.Event) (*SyntheticTriggerAdapter, error) {
 	ceAdapter := adapter.NewCloudEventAdapter(e)
 
-	ttData := &SyntheticTriggeredEventData{}
+	ttData := &SyntheticTriggerEventData{}
 	err := ceAdapter.PayloadAs(ttData)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SyntheticTriggeredAdapter{
+	return &SyntheticTriggerAdapter{
 		event:      *ttData,
 		cloudEvent: ceAdapter,
 	}, nil
 }
 
 // GetShKeptnContext returns the shkeptncontext
-func (a SyntheticTriggeredAdapter) GetShKeptnContext() string {
+func (a SyntheticTriggerAdapter) GetShKeptnContext() string {
 	return a.cloudEvent.GetShKeptnContext()
 }
 
 // GetSource returns the source specified in the CloudEvent context
-func (a SyntheticTriggeredAdapter) GetSource() string {
+func (a SyntheticTriggerAdapter) GetSource() string {
 	return a.cloudEvent.GetSource()
 }
 
 // GetEvent returns the event type
-func (a SyntheticTriggeredAdapter) GetEvent() string {
+func (a SyntheticTriggerAdapter) GetEvent() string {
 	return keptnv2.GetFinishedEventType(keptnv2.TestTaskName)
 }
 
 // GetProject returns the project
-func (a SyntheticTriggeredAdapter) GetProject() string {
+func (a SyntheticTriggerAdapter) GetProject() string {
 	return a.event.Project
 }
 
 // GetStage returns the stage
-func (a SyntheticTriggeredAdapter) GetStage() string {
+func (a SyntheticTriggerAdapter) GetStage() string {
 	return a.event.Stage
 }
 
 // GetService returns the service
-func (a SyntheticTriggeredAdapter) GetService() string {
+func (a SyntheticTriggerAdapter) GetService() string {
 	return a.event.Service
 }
 
 // GetDeployment returns the name of the deployment
-func (a SyntheticTriggeredAdapter) GetDeployment() string {
+func (a SyntheticTriggerAdapter) GetDeployment() string {
 	return ""
 }
 
 // GetTestStrategy returns the used test strategy
-func (a SyntheticTriggeredAdapter) GetTestStrategy() string {
+func (a SyntheticTriggerAdapter) GetTestStrategy() string {
 	return ""
 }
 
 // GetMonitorId returns the used synthetic monitor id
-func (a SyntheticTriggeredAdapter) GetSyntheticMonitorId() string {
-	return a.event.MonitorId
+func (a SyntheticTriggerAdapter) GetSyntheticMonitorTag() string {
+	return a.event.MonitorTag
 }
 
 // GetDeploymentStrategy returns the used deployment strategy
-func (a SyntheticTriggeredAdapter) GetDeploymentStrategy() string {
+func (a SyntheticTriggerAdapter) GetDeploymentStrategy() string {
 	return ""
 }
 
 // GetLabels returns a map of labels
-func (a SyntheticTriggeredAdapter) GetLabels() map[string]string {
+func (a SyntheticTriggerAdapter) GetLabels() map[string]string {
 	return a.event.Labels
+}
+
+func (a SyntheticTriggerAdapter) GetEventID() string {
+	return a.cloudEvent.GetEventID()
 }

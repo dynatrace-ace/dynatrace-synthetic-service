@@ -15,6 +15,7 @@ import (
 	"github.com/keptn-contrib/dynatrace-service/internal/dynatrace"
 	"github.com/keptn-contrib/dynatrace-service/internal/keptn"
 	"github.com/keptn-contrib/dynatrace-service/internal/synthetic"
+	"github.com/keptn-contrib/dynatrace-service/internal/synthetic/connector"
 )
 
 // DynatraceEventHandler is the common interface for all event handlers.
@@ -74,6 +75,8 @@ func getEventHandler(ctx context.Context, event cloudevents.Event, clientFactory
 
 	dtClient := dynatrace.NewClient(dynatraceCredentials)
 
+	sClient := connector.NewSyntheticConnector(dtClient)
+
 	kClient, err := keptn.NewDefaultClient(event)
 	if err != nil {
 		return nil, fmt.Errorf("could not create Keptn client: %w", err)
@@ -102,8 +105,8 @@ func getEventHandler(ctx context.Context, event cloudevents.Event, clientFactory
 	// 	return action.NewEvaluationFinishedEventHandler(keptnEvent.(*action.EvaluationFinishedAdapter), dtClient, clientFactory.CreateEventClient(), dynatraceConfig.AttachRules), nil
 	// case *action.ReleaseTriggeredAdapter:
 	// 	return action.NewReleaseTriggeredEventHandler(keptnEvent.(*action.ReleaseTriggeredAdapter), dtClient, clientFactory.CreateEventClient(), dynatraceConfig.AttachRules), nil
-	case *synthetic.SyntheticTriggeredAdapter:
-		return synthetic.NewSyntheticTriggeredEventHandler(keptnEvent.(*synthetic.SyntheticTriggeredAdapter), dtClient, kClient, clientFactory.CreateEventClient(), dynatraceConfig.AttachRules), nil
+	case *synthetic.SyntheticTriggerAdapter:
+		return synthetic.NewSyntheticTriggerEventHandler(keptnEvent.(*synthetic.SyntheticTriggerAdapter), dtClient, sClient, kClient, clientFactory.CreateEventClient(), dynatraceConfig.AttachRules), nil
 	default:
 		return NewErrorHandler(fmt.Errorf("this should not have happened, we are missing an implementation for: %T", aType), event, clientFactory.CreateUniformClient()), nil
 	}
@@ -112,7 +115,7 @@ func getEventHandler(ctx context.Context, event cloudevents.Event, clientFactory
 func getEventAdapter(e cloudevents.Event) (adapter.EventContentAdapter, error) {
 	switch e.Type() {
 	case keptnv2.GetTriggeredEventType("test"):
-		return synthetic.NewSyntheticTriggeredAdapterFromEvent(e)
+		return synthetic.NewSyntheticTriggerAdapterFromEvent(e)
 	// case keptnevents.ConfigureMonitoringEventType:
 	// 	return monitoring.NewConfigureMonitoringAdapterFromEvent(e)
 	// case keptnevents.ProblemEventType:

@@ -67,8 +67,8 @@ func (f *CloudEventFactoryBase) CreateCloudEvent() (*cloudevents.Event, error) {
 	return &ev, nil
 }
 
-// GetEventSource gets the source to be used for CloudEvents originating from the dynatrace-service.
+// GetEventSource gets the source to be used for CloudEvents originating from the dynatrace-synthetic-service.
 func GetEventSource() string {
-	source, _ := url.Parse("dynatrace-service")
+	source, _ := url.Parse("dynatrace-synthetic-service")
 	return source.String()
 }
