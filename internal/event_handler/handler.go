@@ -9,11 +9,12 @@ import (
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/keptn-contrib/dynatrace-service/internal/action"
 	"github.com/keptn-contrib/dynatrace-service/internal/adapter"
 	"github.com/keptn-contrib/dynatrace-service/internal/config"
 	"github.com/keptn-contrib/dynatrace-service/internal/credentials"
+	"github.com/keptn-contrib/dynatrace-service/internal/dynatrace"
 	"github.com/keptn-contrib/dynatrace-service/internal/keptn"
+	"github.com/keptn-contrib/dynatrace-service/internal/synthetic"
 )
 
 // DynatraceEventHandler is the common interface for all event handlers.
@@ -65,18 +66,18 @@ func getEventHandler(ctx context.Context, event cloudevents.Event, clientFactory
 		return nil, fmt.Errorf("could not create Kubernetes secret reader: %w", err)
 	}
 
-	// dynatraceCredentials, err := dynatraceCredentialsProvider.GetDynatraceCredentials(ctx, dynatraceConfig.DtCreds)
+	dynatraceCredentials, err := dynatraceCredentialsProvider.GetDynatraceCredentials(ctx, dynatraceConfig.DtCreds)
 	_, err = dynatraceCredentialsProvider.GetDynatraceCredentials(ctx, dynatraceConfig.DtCreds)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Dynatrace credentials: %w", err)
 	}
 
-	// dtClient := dynatrace.NewClient(dynatraceCredentials)
+	dtClient := dynatrace.NewClient(dynatraceCredentials)
 
-	// kClient, err := keptn.NewDefaultClient(event)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("could not create Keptn client: %w", err)
-	// }
+	kClient, err := keptn.NewDefaultClient(event)
+	if err != nil {
+		return nil, fmt.Errorf("could not create Keptn client: %w", err)
+	}
 
 	switch aType := keptnEvent.(type) {
 	// case *monitoring.ConfigureMonitoringAdapter:
@@ -101,6 +102,8 @@ func getEventHandler(ctx context.Context, event cloudevents.Event, clientFactory
 	// 	return action.NewEvaluationFinishedEventHandler(keptnEvent.(*action.EvaluationFinishedAdapter), dtClient, clientFactory.CreateEventClient(), dynatraceConfig.AttachRules), nil
 	// case *action.ReleaseTriggeredAdapter:
 	// 	return action.NewReleaseTriggeredEventHandler(keptnEvent.(*action.ReleaseTriggeredAdapter), dtClient, clientFactory.CreateEventClient(), dynatraceConfig.AttachRules), nil
+	case *synthetic.SyntheticTriggeredAdapter:
+		return synthetic.NewSyntheticTriggeredEventHandler(keptnEvent.(*synthetic.SyntheticTriggeredAdapter), dtClient, kClient, clientFactory.CreateEventClient(), dynatraceConfig.AttachRules), nil
 	default:
 		return NewErrorHandler(fmt.Errorf("this should not have happened, we are missing an implementation for: %T", aType), event, clientFactory.CreateUniformClient()), nil
 	}
@@ -109,7 +112,7 @@ func getEventHandler(ctx context.Context, event cloudevents.Event, clientFactory
 func getEventAdapter(e cloudevents.Event) (adapter.EventContentAdapter, error) {
 	switch e.Type() {
 	case keptnv2.GetTriggeredEventType("test"):
-		return action.NewTestTriggeredAdapterFromEvent(e)
+		return synthetic.NewSyntheticTriggeredAdapterFromEvent(e)
 	// case keptnevents.ConfigureMonitoringEventType:
 	// 	return monitoring.NewConfigureMonitoringAdapterFromEvent(e)
 	// case keptnevents.ProblemEventType:
