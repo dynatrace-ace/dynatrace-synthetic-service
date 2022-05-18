@@ -11,7 +11,7 @@ dynatraceService:
     generateManagementZones: false           # Generate Management Zones in Dynatrace Tenant
     generateDashboards: false                # Generate Dashboards in Dynatrace Tenant
     generateMetricEvents: false              # Generate Metric Events in Dynatrace Tenant
-    synchronizeDynatraceServices: true       # Synchronize Service Entities between Dynatrace and Keptn
+    synchronizeDynatraceServices: false       # Synchronize Service Entities between Dynatrace and Keptn
     synchronizeDynatraceServicesIntervalSeconds: 60       # Synchronization Interval
     httpSSLVerify: true                      # Verify HTTPS SSL certificates
     httpProxy: ""                            # Proxy for HTTP requests
