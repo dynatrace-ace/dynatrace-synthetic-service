@@ -10,12 +10,14 @@ type SyntheticTriggerAdapterInterface interface {
 	adapter.EventContentAdapter
 	adapter.TriggeredCloudEventContentAdapter
 
+	GetSyntheticMonitorId() string
 	GetSyntheticMonitorTag() string
 }
 
 type SyntheticTriggerEventData struct {
 	keptnv2.EventData
 	MonitorTag string `json:"monitorTag"`
+	MonitorId  string `json:"monitorId"`
 }
 
 // SyntheticTriggerAdapter is a content adaptor for events of type sh.keptn.event.test.triggered
@@ -80,7 +82,12 @@ func (a SyntheticTriggerAdapter) GetTestStrategy() string {
 	return ""
 }
 
-// GetMonitorId returns the used synthetic monitor id
+// GetSyntheticMonitorId returns the used synthetic monitor id
+func (a SyntheticTriggerAdapter) GetSyntheticMonitorId() string {
+	return a.event.MonitorId
+}
+
+// GetSyntheticMonitorTag returns the used synthetic monitor tag
 func (a SyntheticTriggerAdapter) GetSyntheticMonitorTag() string {
 	return a.event.MonitorTag
 }

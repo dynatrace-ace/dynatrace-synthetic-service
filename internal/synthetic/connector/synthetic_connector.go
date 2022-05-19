@@ -12,7 +12,8 @@ import (
 const syntheticTriggerPath = "/api/v2/synthetic/monitors/execute"
 
 type SyntheticConnectorInterface interface {
-	Trigger(workCtx context.Context, monitorTag string) (ExecutionData, error)
+	TriggerById(workCtx context.Context, monitorId string) (ExecutionData, error)
+	TriggerByTag(workCtx context.Context, monitorTag string) (ExecutionData, error)
 }
 
 type SyntheticConnector struct {
@@ -48,7 +49,20 @@ type ExecutionData struct {
 	FailedExecutions []ExecutionNotTriggered `json:"failedExecutions"`
 }
 
-func generateExecutionEvent(monitorTag string) []byte {
+func generateExecutionByIdEvent(monitorId string) []byte {
+	jsonData := []byte(fmt.Sprintf(`{
+		"monitors": [
+			{
+				"monitorId": "%s",
+				"locations": []
+			}
+		]
+	}`, monitorId))
+
+	return jsonData
+}
+
+func generateExecutionByTagEvent(monitorTag string) []byte {
 	jsonData := []byte(fmt.Sprintf(`{
 		"group": {
 			"tags": [
@@ -82,9 +96,18 @@ func parseBatchId(executionResponseBody ExecutionResponseBody) string {
 	return batchId
 }
 
-func (sc *SyntheticConnector) Trigger(workCtx context.Context, monitorTag string) (ExecutionData, error) {
+func (sc *SyntheticConnector) TriggerById(workCtx context.Context, monitorId string) (ExecutionData, error) {
+	jsonData := generateExecutionByIdEvent(monitorId)
+	return sc.trigger(workCtx, jsonData)
+}
+
+func (sc *SyntheticConnector) TriggerByTag(workCtx context.Context, monitorTag string) (ExecutionData, error) {
+	jsonData := generateExecutionByTagEvent(monitorTag)
+	return sc.trigger(workCtx, jsonData)
+}
+
+func (sc *SyntheticConnector) trigger(workCtx context.Context, jsonData []byte) (ExecutionData, error) {
 	triggerData := ExecutionData{}
-	jsonData := generateExecutionEvent(monitorTag)
 
 	resp, err := sc.dtClient.Post(workCtx, syntheticTriggerPath, jsonData)
 	if err != nil {
