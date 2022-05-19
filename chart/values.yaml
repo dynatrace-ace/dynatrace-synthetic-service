@@ -2,7 +2,7 @@ dynatraceService:
   image:
     repository: dynatraceace/keptn-dt-synthetic-service # Container Image Name
     pullPolicy: Always                 # Kubernetes Image Pull Policy
-    tag: "0.1.0-dev"                                  # Container Tag
+    tag: "latest"                                  # Container Tag
   service:
     enabled: true                            # Creates a Kubernetes Service for the dynatrace-service
   config:

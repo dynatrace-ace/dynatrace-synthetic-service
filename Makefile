@@ -10,6 +10,9 @@ push: build
 	@docker push "${IMAGE}:${tag}"
 	@echo "\nSuccesfully pushed ${IMAGE}:${tag}!"
 
+deploy: checktag
+	@helm upgrade --install -n keptn dynatrace-synthetic-service --set "dynatraceService.image.tag=${tag}" chart/
+
 checktag:
 ifndef tag
 $(error tag is not set)
