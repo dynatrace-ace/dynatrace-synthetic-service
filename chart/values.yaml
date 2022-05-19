@@ -20,6 +20,7 @@ dynatraceService:
     logLevel: "debug"                         # Minimum log level to log
     keptnApiUrl: ""                          # URL of keptn API
     keptnBridgeUrl: ""                       # URL of keptn bridge
+    isLegacyDynatraceApiFormat: false        # Clusters version < 240 require handling for legacy API
 
 distributor:
   metadata:

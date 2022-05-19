@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/keptn-contrib/dynatrace-service/internal/dynatrace"
+	"github.com/keptn-contrib/dynatrace-service/internal/env"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,7 +50,20 @@ type ExecutionData struct {
 	FailedExecutions []ExecutionNotTriggered `json:"failedExecutions"`
 }
 
-func generateExecutionByIdEvent(monitorId string) []byte {
+func generateExecutionByIdEvent(monitorId string, isLegacyApi bool) []byte {
+	if isLegacyApi {
+		jsonData := []byte(fmt.Sprintf(`{
+			"monitorsToTrigger": [
+				{
+					"monitorId": "%s",
+					"locations": []
+				}
+			]
+		}`, monitorId))
+
+		return jsonData
+	}
+
 	jsonData := []byte(fmt.Sprintf(`{
 		"monitors": [
 			{
@@ -62,7 +76,19 @@ func generateExecutionByIdEvent(monitorId string) []byte {
 	return jsonData
 }
 
-func generateExecutionByTagEvent(monitorTag string) []byte {
+func generateExecutionByTagEvent(monitorTag string, isLegacyApi bool) []byte {
+	if isLegacyApi {
+		jsonData := []byte(fmt.Sprintf(`{
+			"monitorsByTagToTrigger": {
+				"tags": [
+					"%s"
+				]
+			}
+		}`, monitorTag))
+
+		return jsonData
+	}
+
 	jsonData := []byte(fmt.Sprintf(`{
 		"group": {
 			"tags": [
@@ -97,12 +123,30 @@ func parseBatchId(executionResponseBody ExecutionResponseBody) string {
 }
 
 func (sc *SyntheticConnector) TriggerById(workCtx context.Context, monitorId string) (ExecutionData, error) {
-	jsonData := generateExecutionByIdEvent(monitorId)
+	isLegacyApi := env.IsLegacyDynatraceApiFormat()
+	if isLegacyApi {
+		log.Debug("Detected legacy API. Request will be sent in legacy format.")
+	}
+
+	jsonData := generateExecutionByIdEvent(monitorId, isLegacyApi)
+
+	log.Debug("TriggerById")
+	log.Debug(string(jsonData))
+
 	return sc.trigger(workCtx, jsonData)
 }
 
 func (sc *SyntheticConnector) TriggerByTag(workCtx context.Context, monitorTag string) (ExecutionData, error) {
-	jsonData := generateExecutionByTagEvent(monitorTag)
+	isLegacyApi := env.IsLegacyDynatraceApiFormat()
+	if isLegacyApi {
+		log.Debug("Detected legacy API. Request will be sent in legacy format.")
+	}
+
+	jsonData := generateExecutionByTagEvent(monitorTag, isLegacyApi)
+
+	log.Debug("TriggerByTag")
+	log.Debug(string(jsonData))
+
 	return sc.trigger(workCtx, jsonData)
 }
 
@@ -113,6 +157,8 @@ func (sc *SyntheticConnector) trigger(workCtx context.Context, jsonData []byte) 
 	if err != nil {
 		return ExecutionData{}, err
 	}
+
+	log.Debug(string(resp))
 
 	executionResponseBody := ExecutionResponseBody{}
 	err = json.Unmarshal(resp, &executionResponseBody)

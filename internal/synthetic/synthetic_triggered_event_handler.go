@@ -38,7 +38,7 @@ func (eh *SyntheticTriggerEventHandler) HandleEvent(workCtx context.Context, rep
 	syntheticMonitorTag := eh.event.GetSyntheticMonitorTag()
 
 	isMonitorIdDefined := syntheticMonitorId != ""
-	isMonitorTagDefined := syntheticMonitorId != ""
+	isMonitorTagDefined := syntheticMonitorTag != ""
 
 	if !isMonitorIdDefined && !isMonitorTagDefined {
 		log.Info("Neither monitor id nor tag provided. Skipping handler...")
@@ -61,7 +61,7 @@ func (eh *SyntheticTriggerEventHandler) HandleEvent(workCtx context.Context, rep
 			return nil
 		}
 	} else {
-		executionData, err = sClient.TriggerById(workCtx, syntheticMonitorTag)
+		executionData, err = sClient.TriggerById(workCtx, syntheticMonitorId)
 		if err != nil {
 			eh.sendFailedTriggerSyntheticFinishedEvent(executionData, err)
 			return nil

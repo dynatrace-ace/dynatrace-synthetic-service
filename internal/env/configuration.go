@@ -96,6 +96,12 @@ func GetServiceSyncInterval() int {
 	return readEnvAsInt("SYNCHRONIZE_DYNATRACE_SERVICES_INTERVAL_SECONDS", 60)
 }
 
+// IsLegacyDynatraceApiFormat returns wether the Dynatrace API synthetic API is of legacy format.
+// Legacy format requires special handling.
+func IsLegacyDynatraceApiFormat() bool {
+	return readEnvAsBool("IS_LEGACY_DYNATRACE_API_FORMAT", false)
+}
+
 func readEnvAsBool(env string, defaultValue bool) bool {
 	envValue := os.Getenv(env)
 	if envValue == "" {

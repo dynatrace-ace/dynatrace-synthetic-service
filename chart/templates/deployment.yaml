@@ -85,6 +85,8 @@ spec:
                 secretKeyRef:
                   name: keptn-api-token
                   key: keptn-api-token
+            - name: IS_LEGACY_DYNATRACE_API_FORMAT
+              value: '{{ .Values.dynatraceService.config.isLegacyDynatraceApiFormat }}'
             - name: WORK_GRACE_PERIOD_SECONDS
               value: '{{ .Values.workGracePeriodSeconds }}'
             - name: REPLY_GRACE_PERIOD_SECONDS
