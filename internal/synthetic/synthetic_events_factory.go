@@ -15,6 +15,7 @@ type SyntheticExecution struct {
 	BatchId          string                            `json:"batchId"`
 	ExecutionIds     []string                          `json:"executionIds"`
 	FailedExecutions []connector.ExecutionNotTriggered `json:"failedExecutions"`
+	SuccessRate      float64                           `json:"successRate"`
 }
 
 type SyntheticTriggerFinishedEventData struct {
@@ -82,6 +83,17 @@ func NewErroredSyntheticTriggerFinishedEventFactory(event SyntheticTriggerAdapte
 	}
 }
 
+// NewWarningSyntheticTriggerFinishedEventFactory creates a new SyntheticTriggerFinishedEventFactory with status unknown, result warning.
+func NewWarningSyntheticTriggerFinishedEventFactory(event SyntheticTriggerAdapterInterface, executionData connector.ExecutionData, err error) *SyntheticTriggerFinishedEventFactory {
+	return &SyntheticTriggerFinishedEventFactory{
+		event:         event,
+		status:        keptnv2.StatusUnknown,
+		result:        keptnv2.ResultWarning,
+		err:           err,
+		executionData: executionData,
+	}
+}
+
 // CreateCloudEvent creates a cloud event based on the factory or returns an error if this can't be done.
 func (f *SyntheticTriggerFinishedEventFactory) CreateCloudEvent() (*cloudevents.Event, error) {
 	msg := ""
@@ -104,6 +116,7 @@ func (f *SyntheticTriggerFinishedEventFactory) CreateCloudEvent() (*cloudevents.
 			BatchId:          f.executionData.BatchId,
 			ExecutionIds:     f.executionData.ExecutionIds,
 			FailedExecutions: f.executionData.FailedExecutions,
+			SuccessRate:      f.executionData.SuccessRate,
 		},
 	}
 

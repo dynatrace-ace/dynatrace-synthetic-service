@@ -68,6 +68,34 @@ func (eh *SyntheticTriggerEventHandler) HandleEvent(workCtx context.Context, rep
 		}
 	}
 
+	isWaitForExecutionRequested := eh.event.IsWaitForExecutionRequested()
+	// isWaitForDataRequested := eh.event.IsWaitForDataRequested()
+
+	if isWaitForExecutionRequested {
+		_, successRate, err := sClient.WaitForBatchExecution(workCtx)
+		if err != nil {
+			eh.sendWarningfulTriggerSyntheticFinishedEvent(executionData, err)
+			return err
+		}
+
+		executionData.SuccessRate = successRate
+
+		_, err = sClient.IngestSyntheticSuccessMetric(workCtx, syntheticMonitorId, eh.event.GetProject(), eh.event.GetService(), eh.event.GetStage(), executionData.BatchId, successRate)
+		if err != nil {
+			eh.sendWarningfulTriggerSyntheticFinishedEvent(executionData, err)
+			return err
+		}
+
+		// } else if isWaitForDataRequested {
+		// 	err = eh.sendSuccessfulTriggerSyntheticFinishedEvent(executionData)
+		// 	if err != nil {
+		//    eh.sendFailedTriggerSyntheticFinishedEvent(executionData, err)
+		// 		return err
+		// 	}
+
+		// 	return nil
+	}
+
 	err = eh.sendSuccessfulTriggerSyntheticFinishedEvent(executionData)
 	if err != nil {
 		return err
@@ -82,6 +110,10 @@ func (eh *SyntheticTriggerEventHandler) sendTriggerSyntheticStartedEvent() error
 
 func (eh *SyntheticTriggerEventHandler) sendSuccessfulTriggerSyntheticFinishedEvent(executionData connector.ExecutionData) error {
 	return eh.sendEvent(NewSucceededSyntheticTriggerFinishedEventFactory(eh.event, executionData, nil))
+}
+
+func (eh *SyntheticTriggerEventHandler) sendWarningfulTriggerSyntheticFinishedEvent(executionData connector.ExecutionData, err error) error {
+	return eh.sendEvent(NewWarningSyntheticTriggerFinishedEventFactory(eh.event, executionData, err))
 }
 
 func (eh *SyntheticTriggerEventHandler) sendFailedTriggerSyntheticFinishedEvent(executionData connector.ExecutionData, err error) error {

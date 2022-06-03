@@ -17,8 +17,11 @@ type ClientInterface interface {
 	// Get performs an HTTP get request.
 	Get(ctx context.Context, apiPath string) ([]byte, int, string, error)
 
-	// Post performs an HTTP post request.
+	// Post performs an HTTP post request with application/json content.
 	Post(ctx context.Context, apiPath string, body []byte) ([]byte, int, string, error)
+
+	// PostTextPlain performs an HTTP post request with text/plain content.
+	PostTextPlain(ctx context.Context, apiPath string, body []byte) ([]byte, int, string, error)
 
 	// Put performs an HTTP put request.
 	Put(ctx context.Context, apiPath string, body []byte) ([]byte, int, string, error)
@@ -64,29 +67,34 @@ func NewDefaultClient(httpClient *http.Client, baseURL string) *Client {
 
 // Get performs an HTTP get request.
 func (c *Client) Get(ctx context.Context, apiPath string) ([]byte, int, string, error) {
-	return c.sendRequest(ctx, apiPath, http.MethodGet, nil)
+	return c.sendRequest(ctx, apiPath, http.MethodGet, nil, "application/json")
 }
 
-// Post performs an HTTP post request.
+// Post performs an HTTP post request with application/json content.
 func (c *Client) Post(ctx context.Context, apiPath string, body []byte) ([]byte, int, string, error) {
-	return c.sendRequest(ctx, apiPath, http.MethodPost, body)
+	return c.sendRequest(ctx, apiPath, http.MethodPost, body, "application/json")
+}
+
+// PostTextPlain performs an HTTP post request with text/plain content.
+func (c *Client) PostTextPlain(ctx context.Context, apiPath string, body []byte) ([]byte, int, string, error) {
+	return c.sendRequest(ctx, apiPath, http.MethodPost, body, "text/plain")
 }
 
 // Put performs an HTTP put request.
 func (c *Client) Put(ctx context.Context, apiPath string, body []byte) ([]byte, int, string, error) {
-	return c.sendRequest(ctx, apiPath, http.MethodPut, body)
+	return c.sendRequest(ctx, apiPath, http.MethodPut, body, "application/json")
 }
 
 // Delete performs an HTTP delete request.
 func (c *Client) Delete(ctx context.Context, apiPath string) ([]byte, int, string, error) {
-	return c.sendRequest(ctx, apiPath, http.MethodDelete, nil)
+	return c.sendRequest(ctx, apiPath, http.MethodDelete, nil, "application/json")
 }
 
 // sendRequest makes an API request and returns the response and the status code or an error.
 // The response will not contain any data in case of an error.
-func (c *Client) sendRequest(ctx context.Context, apiPath string, method string, body []byte) ([]byte, int, string, error) {
+func (c *Client) sendRequest(ctx context.Context, apiPath string, method string, body []byte, contentType string) ([]byte, int, string, error) {
 
-	req, err := c.createRequest(ctx, apiPath, method, body)
+	req, err := c.createRequest(ctx, apiPath, method, body, contentType)
 	if err != nil {
 		return nil, NoStatus, "", err
 	}
@@ -95,10 +103,10 @@ func (c *Client) sendRequest(ctx context.Context, apiPath string, method string,
 }
 
 // createRequest creates an HTTP request for an API call with appropriate headers including authorization.
-func (c *Client) createRequest(ctx context.Context, apiPath string, method string, body []byte) (*http.Request, error) {
+func (c *Client) createRequest(ctx context.Context, apiPath string, method string, body []byte, contentType string) (*http.Request, error) {
 	var url = c.baseURL + apiPath
 
-	log.WithFields(log.Fields{"method": method, "url": url}).Debug("creating HTTP request")
+	log.WithFields(log.Fields{"method": method, "url": url, "contentType": contentType}).Debug("creating HTTP request")
 
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(body))
 	if err != nil {
@@ -108,7 +116,8 @@ func (c *Client) createRequest(ctx context.Context, apiPath string, method strin
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	// req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("User-Agent", "keptn-contrib/dynatrace-service:"+env.GetVersion())
 
 	for key, values := range c.additionalHeader {

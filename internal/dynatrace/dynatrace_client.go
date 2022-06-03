@@ -80,8 +80,11 @@ type ClientInterface interface {
 	// Get performs a get request.
 	Get(ctx context.Context, apiPath string) ([]byte, error)
 
-	// Post performs a post request.
+	// Post performs an HTTP post request with application/json content.
 	Post(ctx context.Context, apiPath string, body []byte) ([]byte, error)
+
+	// PostTextPlain performs an HTTP post request with text/plain content.
+	PostTextPlain(ctx context.Context, apiPath string, body []byte) ([]byte, error)
 
 	// Put performs a put request.
 	Put(ctx context.Context, apiPath string, body []byte) ([]byte, error)
@@ -132,9 +135,19 @@ func (dt *Client) Get(ctx context.Context, apiPath string) ([]byte, error) {
 	return validateResponse(body, status, url)
 }
 
-// Post performs a post request.
+// Post performs an HTTP post request with application/json content.
 func (dt *Client) Post(ctx context.Context, apiPath string, body []byte) ([]byte, error) {
 	body, status, url, err := dt.restClient.Post(ctx, apiPath, body)
+	if err != nil {
+		return nil, err
+	}
+
+	return validateResponse(body, status, url)
+}
+
+// PostTextPlain performs an HTTP post request with text/plain content.
+func (dt *Client) PostTextPlain(ctx context.Context, apiPath string, body []byte) ([]byte, error) {
+	body, status, url, err := dt.restClient.PostTextPlain(ctx, apiPath, body)
 	if err != nil {
 		return nil, err
 	}

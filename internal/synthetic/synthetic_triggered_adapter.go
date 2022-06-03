@@ -1,6 +1,8 @@
 package synthetic
 
 import (
+	"strings"
+
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/keptn-contrib/dynatrace-service/internal/adapter"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
@@ -12,12 +14,15 @@ type SyntheticTriggerAdapterInterface interface {
 
 	GetSyntheticMonitorId() string
 	GetSyntheticMonitorTag() string
+	IsWaitForDataRequested() bool
+	IsWaitForExecutionRequested() bool
 }
 
 type SyntheticTriggerEventData struct {
 	keptnv2.EventData
 	MonitorTag string `json:"monitorTag"`
 	MonitorId  string `json:"monitorId"`
+	WaitFor    string `json:"waitFor"`
 }
 
 // SyntheticTriggerAdapter is a content adaptor for events of type sh.keptn.event.test.triggered
@@ -90,6 +95,16 @@ func (a SyntheticTriggerAdapter) GetSyntheticMonitorId() string {
 // GetSyntheticMonitorTag returns the used synthetic monitor tag
 func (a SyntheticTriggerAdapter) GetSyntheticMonitorTag() string {
 	return a.event.MonitorTag
+}
+
+// IsWaitForDataRequested returns whether the synthetic monitor shall wait for data retrieval
+func (a SyntheticTriggerAdapter) IsWaitForDataRequested() bool {
+	return strings.ToLower(a.event.WaitFor) == "data"
+}
+
+// IsWaitForExecutionRequested returns whether the synthetic monitor shall wait for synthetic execution
+func (a SyntheticTriggerAdapter) IsWaitForExecutionRequested() bool {
+	return strings.ToLower(a.event.WaitFor) == "execution"
 }
 
 // GetDeploymentStrategy returns the used deployment strategy
