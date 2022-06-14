@@ -8,12 +8,10 @@ import (
 	"time"
 
 	"github.com/keptn-contrib/dynatrace-service/internal/dynatrace"
-	"github.com/keptn-contrib/dynatrace-service/internal/env"
 	log "github.com/sirupsen/logrus"
 )
 
-const syntheticTriggerPath = "/api/v2/synthetic/monitors/execute"
-const syntheticBatchBasePath = "/api/v2/synthetic/monitors/executions/batch"
+const syntheticBatchBasePath = "/api/v2/synthetic/executions/batch"
 const metricsIngestPath = "/api/v2/metrics/ingest"
 
 const executionSuccessMetricKey = "ca.synthetic.execution_success_rate"
@@ -34,15 +32,15 @@ type SyntheticConnector struct {
 }
 
 type ExecutionResponseBody struct {
-	BatchId           string                  `json:"batchId"`
-	NotTriggeredCount int16                   `json:"notTriggeredCount"`
-	NotTriggered      []ExecutionNotTriggered `json:"notTriggered"`
-	TriggeredCount    int16                   `json:"triggeredCount"`
-	Triggered         []ExecutionTriggered    `json:"triggered"`
+	BatchId                   string                  `json:"batchId"`
+	TriggeringProblemsCount   int16                   `json:"triggeringProblemsCount"`
+	TriggeringProblemsDetails []ExecutionNotTriggered `json:"triggeringProblemsDetails"`
+	TriggeredCount            int16                   `json:"triggeredCount"`
+	Triggered                 []ExecutionTriggered    `json:"triggered"`
 }
 
 type ExecutionNotTriggered struct {
-	MonitorId  string `json:"monitorId"`
+	EntityId   string `json:"entityId"`
 	LocationId string `json:"locationId"`
 	Cause      string `json:"cause"`
 }
@@ -56,18 +54,28 @@ type ExecutionTriggered struct {
 }
 
 type ExecutionData struct {
-	BatchId          string                  `json:"batchId"`
-	ExecutionIds     []string                `json:"executionIds"`
-	FailedExecutions []ExecutionNotTriggered `json:"failedExecutions"`
-	SuccessRate      float64                 `json:"successRate"`
+	BatchId          string                   `json:"batchId"`
+	ExecutionIds     []string                 `json:"executionIds"`
+	FailedTriggers   []ExecutionNotTriggered  `json:"failedTriggers"`
+	FailedExecutions []ExecutionNotSuccessful `json:"failedExecutions"`
+	SuccessRate      float64                  `json:"successRate"`
+}
+
+type ExecutionNotSuccessful struct {
+	ExecutionId        string `json:"executionId"`
+	ExecutionStage     string `json:"executionStage"`
+	ExecutionTimestamp int    `json:"executionTimestamp"`
+	MonitorId          string `json:"monitorId"`
+	LocationId         string `json:"locationId"`
 }
 
 type BatchResponseBody struct {
-	BatchStatus          string `json:"batchStatus"`
-	TriggeredCount       int    `json:"triggeredCount"`
-	ExecutedCount        int    `json:"executedCount"`
-	FailedCount          int    `json:"failedCount"`
-	FailedToExecuteCount int    `json:"failedToExecuteCount"`
+	BatchStatus          string                   `json:"batchStatus"`
+	TriggeredCount       int                      `json:"triggeredCount"`
+	ExecutedCount        int                      `json:"executedCount"`
+	FailedCount          int                      `json:"failedCount"`
+	FailedToExecuteCount int                      `json:"failedToExecuteCount"`
+	FailedExecutions     []ExecutionNotSuccessful `json:"failedExecutions"`
 }
 
 type IngestResponseBody struct {
@@ -75,20 +83,7 @@ type IngestResponseBody struct {
 	LinesInvalid int `json:"linesInvalid"`
 }
 
-func generateExecutionByIdEvent(monitorId string, isLegacyApi bool) []byte {
-	if isLegacyApi {
-		jsonData := []byte(fmt.Sprintf(`{
-			"monitorsToTrigger": [
-				{
-					"monitorId": "%s",
-					"locations": []
-				}
-			]
-		}`, monitorId))
-
-		return jsonData
-	}
-
+func generateExecutionByIdEvent(monitorId string) []byte {
 	jsonData := []byte(fmt.Sprintf(`{
 		"monitors": [
 			{
@@ -101,19 +96,7 @@ func generateExecutionByIdEvent(monitorId string, isLegacyApi bool) []byte {
 	return jsonData
 }
 
-func generateExecutionByTagEvent(monitorTag string, isLegacyApi bool) []byte {
-	if isLegacyApi {
-		jsonData := []byte(fmt.Sprintf(`{
-			"monitorsByTagToTrigger": {
-				"tags": [
-					"%s"
-				]
-			}
-		}`, monitorTag))
-
-		return jsonData
-	}
-
+func generateExecutionByTagEvent(monitorTag string) []byte {
 	jsonData := []byte(fmt.Sprintf(`{
 		"group": {
 			"tags": [
@@ -137,8 +120,8 @@ func parseExecutionIds(executionResponseBody ExecutionResponseBody) []string {
 	return executionIds
 }
 
-func parseFailedExecutions(executionResponseBody ExecutionResponseBody) []ExecutionNotTriggered {
-	executions := executionResponseBody.NotTriggered
+func parseFailedTriggers(executionResponseBody ExecutionResponseBody) []ExecutionNotTriggered {
+	executions := executionResponseBody.TriggeringProblemsDetails
 	return executions
 }
 
@@ -148,12 +131,7 @@ func parseBatchId(executionResponseBody ExecutionResponseBody) string {
 }
 
 func (sc *SyntheticConnector) TriggerById(workCtx context.Context, monitorId string) (ExecutionData, error) {
-	isLegacyApi := env.IsLegacyDynatraceApiFormat()
-	if isLegacyApi {
-		log.Debug("Detected legacy API. Request will be sent in legacy format.")
-	}
-
-	jsonData := generateExecutionByIdEvent(monitorId, isLegacyApi)
+	jsonData := generateExecutionByIdEvent(monitorId)
 
 	log.Debug("TriggerById")
 	log.Debug(string(jsonData))
@@ -162,12 +140,7 @@ func (sc *SyntheticConnector) TriggerById(workCtx context.Context, monitorId str
 }
 
 func (sc *SyntheticConnector) TriggerByTag(workCtx context.Context, monitorTag string) (ExecutionData, error) {
-	isLegacyApi := env.IsLegacyDynatraceApiFormat()
-	if isLegacyApi {
-		log.Debug("Detected legacy API. Request will be sent in legacy format.")
-	}
-
-	jsonData := generateExecutionByTagEvent(monitorTag, isLegacyApi)
+	jsonData := generateExecutionByTagEvent(monitorTag)
 
 	log.Debug("TriggerByTag")
 	log.Debug(string(jsonData))
@@ -176,12 +149,10 @@ func (sc *SyntheticConnector) TriggerByTag(workCtx context.Context, monitorTag s
 }
 
 func (sc *SyntheticConnector) trigger(workCtx context.Context, jsonData []byte) (ExecutionData, error) {
-	resp, err := sc.dtClient.Post(workCtx, syntheticTriggerPath, jsonData)
+	resp, err := sc.dtClient.Post(workCtx, syntheticBatchBasePath, jsonData)
 	if err != nil {
 		return ExecutionData{}, err
 	}
-
-	log.Debug(string(resp))
 
 	executionResponseBody := ExecutionResponseBody{}
 	err = json.Unmarshal(resp, &executionResponseBody)
@@ -192,13 +163,9 @@ func (sc *SyntheticConnector) trigger(workCtx context.Context, jsonData []byte) 
 
 	sc.executionData.BatchId = parseBatchId(executionResponseBody)
 	sc.executionData.ExecutionIds = parseExecutionIds(executionResponseBody)
-	sc.executionData.FailedExecutions = parseFailedExecutions(executionResponseBody)
+	sc.executionData.FailedTriggers = parseFailedTriggers(executionResponseBody)
 
-	return ExecutionData{
-		BatchId:          parseBatchId(executionResponseBody),
-		ExecutionIds:     parseExecutionIds(executionResponseBody),
-		FailedExecutions: parseFailedExecutions(executionResponseBody),
-	}, nil
+	return sc.executionData, nil
 }
 
 func generateMetricsIngestLine(syntheticTestId string, projectName string, serviceName string, stageName string, batchId string, gauge float64) string {

@@ -12,10 +12,11 @@ type SyntheticTriggerStartedEventData struct {
 }
 
 type SyntheticExecution struct {
-	BatchId          string                            `json:"batchId"`
-	ExecutionIds     []string                          `json:"executionIds"`
-	FailedExecutions []connector.ExecutionNotTriggered `json:"failedExecutions"`
-	SuccessRate      float64                           `json:"successRate"`
+	BatchId          string                             `json:"batchId"`
+	ExecutionIds     []string                           `json:"executionIds"`
+	FailedTriggers   []connector.ExecutionNotTriggered  `json:"failedTriggers"`
+	FailedExecutions []connector.ExecutionNotSuccessful `json:"failedExecutions"`
+	SuccessRate      float64                            `json:"successRate"`
 }
 
 type SyntheticTriggerFinishedEventData struct {
@@ -115,6 +116,7 @@ func (f *SyntheticTriggerFinishedEventFactory) CreateCloudEvent() (*cloudevents.
 		SyntheticExecution: SyntheticExecution{
 			BatchId:          f.executionData.BatchId,
 			ExecutionIds:     f.executionData.ExecutionIds,
+			FailedTriggers:   f.executionData.FailedTriggers,
 			FailedExecutions: f.executionData.FailedExecutions,
 			SuccessRate:      f.executionData.SuccessRate,
 		},

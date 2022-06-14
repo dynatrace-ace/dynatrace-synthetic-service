@@ -2,7 +2,7 @@ dynatraceService:
   image:
     repository: dynatraceace/keptn-dt-synthetic-service # Container Image Name
     pullPolicy: IfNotPresent                 # Kubernetes Image Pull Policy
-    tag: "0.3.0"                             # Container Tag
+    tag: "0.4.0"                             # Container Tag
   service:
     enabled: true                            # Creates a Kubernetes Service for the dynatrace-service
   config:
@@ -20,7 +20,6 @@ dynatraceService:
     logLevel: "debug"                         # Minimum log level to log
     keptnApiUrl: ""                          # URL of keptn API
     keptnBridgeUrl: ""                       # URL of keptn bridge
-    isLegacyDynatraceApiFormat: false        # Clusters version < 240 require handling for legacy API
 
 distributor:
   metadata:

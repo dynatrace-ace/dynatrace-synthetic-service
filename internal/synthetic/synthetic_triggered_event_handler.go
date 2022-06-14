@@ -72,12 +72,13 @@ func (eh *SyntheticTriggerEventHandler) HandleEvent(workCtx context.Context, rep
 	// isWaitForDataRequested := eh.event.IsWaitForDataRequested()
 
 	if isWaitForExecutionRequested {
-		_, successRate, err := sClient.WaitForBatchExecution(workCtx)
+		batchResponseBody, successRate, err := sClient.WaitForBatchExecution(workCtx)
 		if err != nil {
 			eh.sendWarningfulTriggerSyntheticFinishedEvent(executionData, err)
 			return err
 		}
 
+		executionData.FailedExecutions = batchResponseBody.FailedExecutions
 		executionData.SuccessRate = successRate
 
 		_, err = sClient.IngestSyntheticSuccessMetric(workCtx, syntheticMonitorId, eh.event.GetProject(), eh.event.GetService(), eh.event.GetStage(), executionData.BatchId, successRate)
