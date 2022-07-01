@@ -10,3 +10,4 @@ _*
 
 # Release Artifacts
 RELEASE-BODY.md
+*.tar.gz

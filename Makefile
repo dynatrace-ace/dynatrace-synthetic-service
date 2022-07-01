@@ -1,4 +1,4 @@
-.PHONY: build
+.PHONY: checktag build push deploy helmchart
 
 IMAGE := "dynatraceace/keptn-dt-synthetic-service"
 
@@ -13,7 +13,11 @@ push: build
 deploy: checktag
 	@helm upgrade --install -n keptn dynatrace-synthetic-service --set "dynatraceService.image.tag=${tag}" chart/
 
+helmchart: checktag
+	@tar -czf dt-synthetic-service-${tag}.tar.gz chart/
+	@echo "\nSuccesfully bundled chart dt-synthetic-service-${tag}.tar.gz!" 
+
 checktag:
 ifndef tag
-$(error tag is not set)
+	$(error tag is not set)
 endif
