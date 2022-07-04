@@ -18,11 +18,18 @@ type SyntheticTriggerAdapterInterface interface {
 	IsWaitForExecutionRequested() bool
 }
 
-type SyntheticTriggerEventData struct {
-	keptnv2.EventData
+type TestEventData struct {
 	MonitorTag string `json:"monitorTag"`
 	MonitorId  string `json:"monitorId"`
 	WaitFor    string `json:"waitFor"`
+}
+
+type SyntheticTriggerEventData struct {
+	keptnv2.EventData
+	MonitorTag string        `json:"monitorTag"`
+	MonitorId  string        `json:"monitorId"`
+	WaitFor    string        `json:"waitFor"`
+	Test       TestEventData `json:"test"`
 }
 
 // SyntheticTriggerAdapter is a content adaptor for events of type sh.keptn.event.test.triggered
@@ -89,22 +96,42 @@ func (a SyntheticTriggerAdapter) GetTestStrategy() string {
 
 // GetSyntheticMonitorId returns the used synthetic monitor id
 func (a SyntheticTriggerAdapter) GetSyntheticMonitorId() string {
-	return a.event.MonitorId
+	isDefinedInTestAttribute := a.event.Test.MonitorId != ""
+	if isDefinedInTestAttribute {
+		return a.event.Test.MonitorId
+	} else {
+		return a.event.MonitorId
+	}
 }
 
 // GetSyntheticMonitorTag returns the used synthetic monitor tag
 func (a SyntheticTriggerAdapter) GetSyntheticMonitorTag() string {
-	return a.event.MonitorTag
+	isDefinedInTestAttribute := a.event.Test.MonitorTag != ""
+	if isDefinedInTestAttribute {
+		return a.event.Test.MonitorTag
+	} else {
+		return a.event.MonitorTag
+	}
 }
 
 // IsWaitForDataRequested returns whether the synthetic monitor shall wait for data retrieval
 func (a SyntheticTriggerAdapter) IsWaitForDataRequested() bool {
-	return strings.ToLower(a.event.WaitFor) == "data"
+	isDefinedInTestAttribute := a.event.Test.WaitFor != ""
+	if isDefinedInTestAttribute {
+		return strings.ToLower(a.event.Test.WaitFor) == "data"
+	} else {
+		return strings.ToLower(a.event.WaitFor) == "data"
+	}
 }
 
 // IsWaitForExecutionRequested returns whether the synthetic monitor shall wait for synthetic execution
 func (a SyntheticTriggerAdapter) IsWaitForExecutionRequested() bool {
-	return strings.ToLower(a.event.WaitFor) == "execution"
+	isDefinedInTestAttribute := a.event.Test.WaitFor != ""
+	if isDefinedInTestAttribute {
+		return strings.ToLower(a.event.Test.WaitFor) == "execution"
+	} else {
+		return strings.ToLower(a.event.WaitFor) == "execution"
+	}
 }
 
 // GetDeploymentStrategy returns the used deployment strategy
